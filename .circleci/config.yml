@@ -11,7 +11,8 @@ jobs:
           command: |
             echo "cluster_id = \"$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM\"" > terraform.tfvars
             echo "commit_hash = \"$CIRCLE_SHA1\"" >> terraform.tfvars
-      - terraform/init: {}
+      - terraform/init:
+          backend: false
       - terraform/validate: {}
       - terraform/fmt: {}
       - terraform/apply: {}
