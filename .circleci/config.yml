@@ -1,0 +1,34 @@
+version: 2.1
+#orbs:
+#  terraform: circleci/terraform@2.0.0
+jobs:
+  single-job-lifecycle:
+    environment:
+      TF_VAR_cluster_id: $CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM
+      TF_VAR_commit_hash: $CIRCLE_SHA1
+#    executor: terraform/default
+    docker:
+      - image: alpine:latest
+    steps:
+    - checkout
+#    - terraform/init:
+#        path: ./
+    # - terraform/validate:
+    #     path: ./
+    # - terraform/fmt:
+    #     path: ./
+    # - terraform/apply:
+    #     path: ./
+    #     var: cluster_id=${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM},random_network_num=
+    - run:
+        name: System Test
+        command: |
+          echo "Hash: $TF_VAR_commit_hash"
+          echo "Cluster: $TF_VAR_cluster_id"
+    # - terraform/destroy:
+    #     path: ./
+    working_directory: ~/project/testing
+workflows:
+  single-job-lifecycle:
+    jobs:
+      - single-job-lifecycle
