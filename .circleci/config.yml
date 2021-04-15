@@ -3,9 +3,6 @@ version: 2.1
 #  terraform: circleci/terraform@2.0.0
 jobs:
   single-job-lifecycle:
-    environment:
-      TF_VAR_cluster_id: $CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM
-      TF_VAR_commit_hash: $CIRCLE_SHA1
 #    executor: terraform/default
     docker:
       - image: alpine:latest
@@ -23,8 +20,8 @@ jobs:
     - run:
         name: System Test
         command: |
-          echo "Hash: $TF_VAR_commit_hash"
-          echo "Cluster: $TF_VAR_cluster_id"
+          echo "Hash: $(echo $CIRCLE_SHA1)"
+          echo "Cluster: $(echo $CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM)"
     # - terraform/destroy:
     #     path: ./
     working_directory: ~/project/testing
