@@ -5,22 +5,22 @@ jobs:
   single-job-lifecycle:
     executor: terraform/default
     steps:
-    - checkout
-    - run:
-        name: Generate Variables File
-        command: |
-          echo "cluster_id = \"$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM\"" > terraform.tfvars
-          echo "commit_hash = \"$CIRCLE_SHA1\"" >> terraform.tfvars
-    - terraform/init:
-    - terraform/validate:
-    - terraform/fmt:
-    - terraform/apply:
-    - run:
-        name: System Test
-        command: |
-          grep 'cluster_id' terraform.tfvars
-          grep 'commit_hash' terraform.tfvars
-    - terraform/destroy:
+      - checkout
+      - run:
+          name: Generate Variables File
+          command: |
+            echo "cluster_id = \"$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM\"" > terraform.tfvars
+            echo "commit_hash = \"$CIRCLE_SHA1\"" >> terraform.tfvars
+      - terraform/init: {}
+      - terraform/validate: {}
+      - terraform/fmt: {}
+      - terraform/apply: {}
+      - run:
+          name: System Test
+          command: |
+            grep 'cluster_id' terraform.tfvars
+            grep 'commit_hash' terraform.tfvars
+      - terraform/destroy: {}
     working_directory: ~/project/testing
 workflows:
   single-job-lifecycle:
