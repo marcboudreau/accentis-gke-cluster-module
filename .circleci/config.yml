@@ -8,6 +8,11 @@ jobs:
       - image: alpine:latest
     steps:
     - checkout
+    - run:
+        name: Generate Variables File
+        command: |
+          echo "cluster_id = \"$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM\"" > terraform.tfvars
+          echo "commit_hash = \"$CIRCLE_SHA1\"" >> terraform.tfvars
 #    - terraform/init:
 #        path: ./
     # - terraform/validate:
@@ -20,8 +25,8 @@ jobs:
     - run:
         name: System Test
         command: |
-          echo "Hash: $(echo $CIRCLE_SHA1)"
-          echo "Cluster: $(echo $CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM)"
+          grep 'cluster_id' terraform.tfvars
+          grep 'commit_hash' terraform.tfvars
     # - terraform/destroy:
     #     path: ./
     working_directory: ~/project/testing
