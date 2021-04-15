@@ -1,11 +1,9 @@
 version: 2.1
-#orbs:
-#  terraform: circleci/terraform@2.0.0
+orbs:
+  terraform: circleci/terraform@2.0.0
 jobs:
   single-job-lifecycle:
-#    executor: terraform/default
-    docker:
-      - image: alpine:latest
+    executor: terraform/default
     steps:
     - checkout
     - run:
@@ -13,22 +11,16 @@ jobs:
         command: |
           echo "cluster_id = \"$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM\"" > terraform.tfvars
           echo "commit_hash = \"$CIRCLE_SHA1\"" >> terraform.tfvars
-#    - terraform/init:
-#        path: ./
-    # - terraform/validate:
-    #     path: ./
-    # - terraform/fmt:
-    #     path: ./
-    # - terraform/apply:
-    #     path: ./
-    #     var: cluster_id=${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BUILD_NUM},random_network_num=
+    - terraform/init:
+    - terraform/validate:
+    - terraform/fmt:
+    - terraform/apply:
     - run:
         name: System Test
         command: |
           grep 'cluster_id' terraform.tfvars
           grep 'commit_hash' terraform.tfvars
-    # - terraform/destroy:
-    #     path: ./
+    - terraform/destroy:
     working_directory: ~/project/testing
 workflows:
   single-job-lifecycle:
