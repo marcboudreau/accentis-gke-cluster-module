@@ -79,14 +79,14 @@ jobs:
       run: terraform fmt -check
 
     # Generates an execution plan for Terraform
-    #- name: Terraform Plan
-    #  run: terraform plan
+    - name: Terraform Plan
+      run: terraform plan -var commit_hash="${GITHUB_SHA:0:7}"
 
-    - name: Generate Variables File
-      run: echo "commit_hash = \"test-$(git rev-parse --short HEAD)\"" > test.auto.tfvars
+    #- name: Generate Variables File
+    #  run: echo "commit_hash = \"test-$(git rev-parse --short HEAD)\"" > test.auto.tfvars
 
-    - name: Verify Variables File
-      run: cat test.auto.tfvars
+    #- name: Verify Variables File
+    #  run: cat test.auto.tfvars
 
     # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
     #- name: Terraform Apply
@@ -116,6 +116,9 @@ jobs:
     #    kubectl config set-cluster "gke_${{ secrets.GCP_PROJECT }}_${{ secrets.GCP_REGION }}_test-$(git rev-parse --short HEAD)" --server kubernetees:9443
     #    gcloud compute ssh "$instance" --project="${{ secrets.GCP_PROJECT }}" --region="${{ secrets.GCP_REGION }}" -- -L "9443:$kubernetes_endpoint:443" -N &
   
+    - name: Terraform Destroy
+      run: terraform destroy -var commit_hash="${GITHUB_SHA:0:7}"
+
     # On push to main, tag the repository to create a module version.
     #- name: Tag Module
     #  if: github.ref == 'refs/heads/main' && github.event_name == 'push'
