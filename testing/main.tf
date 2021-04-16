@@ -21,21 +21,21 @@ terraform {
   }
 }
 
+provider "google" {
+    project = "accentis-288921"
+    region  = "us-east1"
+}
+
+provider "google-beta" {
+    project = "accentis-288921"
+    region  = "us-east1"
+}
+
 module "mut" {
     source = "../"
 
-    cluster_id = var.cluster_id
+    cluster_id = "test-${var.commit_hash}"
     base_cidr_block = cidrsubnet("10.0.0.0/8", 8, random_integer.network_num.result)
-}
-
-variable "cluster_id" {
-    description = "The name of the cluster to create.  A unique value should be picked from each CI build to avoid collisions in case multiple builds are running in parallel."
-    type        = string
-}
-
-variable "commit_hash" {
-    description = "The random number generator uses this value to determine if a new number should be generated or not."
-    type        = string
 }
 
 resource "random_integer" "network_num" {
@@ -45,4 +45,18 @@ resource "random_integer" "network_num" {
     keepers = {
         hash = var.commit_hash
     }
+}
+
+resource "google_compute_firewall" "main" {
+    name    = "test-${var.commit_hash}"
+    network = module.mut.network
+
+    allow {
+        protocol = "tcp"
+        ports    = ["22"]
+    }
+
+    source_ranges = ["0.0.0.0/0"]
+    priority      = 1000
+    target_tags   = ["bastion"]
 }

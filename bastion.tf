@@ -32,8 +32,8 @@ resource "google_compute_region_instance_group_manager" "bastion" {
     target_size = 0
 
     auto_healing_policies {
-      health_check      = google_compute_region_health_check.bastion.id
-      initial_delay_Sec = 15
+      health_check      = google_compute_health_check.bastion.id
+      initial_delay_sec = 15
     }
 }
 
@@ -53,13 +53,13 @@ resource "google_compute_instance_template" "bastion" {
     name_prefix = "${var.cluster_id}-bastion"
     
     network_interface {
-      subnetwork = google_compute_subnetwork.main.self_link
+      subnetwork = google_compute_subnetwork.non_gke.self_link
       access_config {
       }
     }
 
     scheduling {
-      automatic_restart   = true
+      automatic_restart   = false
       preemptible         = true
     }
 
@@ -68,13 +68,21 @@ resource "google_compute_instance_template" "bastion" {
       enable_vtpm                 = true
       enable_integrity_monitoring = true
     }
+
+    tags = ["bastion"]
+
+    lifecycle {
+      create_before_destroy = true
+    }
 }
 
 #
 # The health check resource used to monitor the health of the bastion instance,
 # when it is in use.
 #
-resource "google_compute_region_health_check" "bastion" {
+resource "google_compute_health_check" "bastion" {
+    provider = google-beta
+
     name = "${var.cluster_id}-bastion"
 
     check_interval_sec  = 5

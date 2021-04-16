@@ -10,6 +10,7 @@
 
 resource "google_container_cluster" "main" {
     name       = var.cluster_id
+    location   = "us-east1"
     network    = google_compute_network.main.self_link
     subnetwork = google_compute_subnetwork.main.self_link
 
@@ -27,10 +28,16 @@ resource "google_container_cluster" "main" {
         }
     }
 
+    master_authorized_networks_config {
+      cidr_blocks {
+        cidr_block = google_compute_subnetwork.non_gke.ip_cidr_range
+      }
+    }
+
     private_cluster_config {
       enable_private_nodes = true
       enable_private_endpoint = true
-      master_ipv4_cidr_block = cidrsubnet(var.base_cidr_block, 2, 0)
+      master_ipv4_cidr_block = cidrsubnet(var.base_cidr_block, 12, 0)
     }
 
     release_channel {
@@ -41,6 +48,7 @@ resource "google_container_cluster" "main" {
 
 resource "google_container_node_pool" "main" {
     name_prefix = var.cluster_id
+    location    = "us-east1"
     cluster     = google_container_cluster.main.name
     node_count  = 1
 
