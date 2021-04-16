@@ -71,17 +71,18 @@ jobs:
         instance_ip="$(gcloud compute instances describe $instance --zone=$instance_zone --format='value(networkInterfaces[0].accessConfigs[0].natIP)')"
         kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_accentis-288921_us-east1_test-'${GITHUB_SHA:0:7}'")].cluster.server}')"
         ssh-keygen -q -t rsa -b 2048 -N '' -f ~/.ssh/google_compute_engine
-        echo -n "Waiting for bastion instance SSH port... "
+        echo "Waiting for bastion instance SSH port... "
         while ! nc -z $instance_ip 22; do
           sleep 1
         done
-        echo "done."
+        set -x
         gcloud compute ssh "$instance" --project=accentis-288921 --zone="$instance_zone" --strict-host-key-checking=no -- -L "9443:$kubernetes_endpoint:443" -N &
-        echo -n "Waiting for SSH tunnel... "
-        while ! nc -z localhost 9443; do
+        echo "Waiting for SSH tunnel... "
+        i=0
+        while ! nc -z localhost 9443 && [[ $i -lt 100 ]]; do
           sleep 1
+          i=$((i+1))
         done
-        echo "done."
         kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server localhost:9443 --insecure-skip-tls-verify=true
         kubectl cluster-info
         kubectl get nodes
