@@ -67,11 +67,12 @@ jobs:
       run: |
         gcloud compute instance-groups managed resize "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --size=1
         instance="$(gcloud compute instance-groups managed list-instances "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --format="value(instance)")"
-        sudo echo '127.0.0.1 kubernetes' >> /etc/hosts
         kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_accentis-288921_us-east1_test-'${GITHUB_SHA:0:7}'")].cluster.server}')"
-        kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server kubernetees:9443
+        kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server localhost:9443 --insecure-skip-tls-verify=true
         echo "$kubernetes_endpoint"
-    #    gcloud compute ssh "$instance" --project="${{ secrets.GCP_PROJECT }}" --region="${{ secrets.GCP_REGION }}" -- -L "9443:$kubernetes_endpoint:443" -N &
+        gcloud compute ssh "$instance" --project=accentis-288921 --region=us-east1 -- -L "9443:$kubernetes_endpoint:443" -N &
+        kubectl cluster-info
+        kubectl get nodes
   
     - name: Terraform Destroy
       if: always()
