@@ -86,15 +86,11 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-    #- name: Generate Variables File
-    #  run: echo "commit_hash = \"test-$(git rev-parse --short HEAD)\"" > test.auto.tfvars
-
-    #- name: Verify Variables File
-    #  run: cat test.auto.tfvars
-
-    # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-    #- name: Terraform Apply
-    #  run: terraform apply -auto-approve
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var commit_hash="${GITHUB_SHA:0:7}"
+      working-directory: ./testing
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
   
     #- name: Setup Google Cloud SDK
     #  uses: google-github-actions/setup-gcloud@master
