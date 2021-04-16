@@ -73,7 +73,9 @@ jobs:
         echo "Kubernetes Endpoint: $kubernetes_endpoint"
         echo "Instance: $instance"
         echo "Instance Zone: $instance_zone"
+        ssh-keygen -q -t rsa -b 2048 -N '' -f ~/google_compute_engine
         gcloud compute ssh "$instance" --project=accentis-288921 --zone "$instance_zone" -- -L "9443:$kubernetes_endpoint:443" -N &
+        sleep 5
         kubectl cluster-info
         kubectl get nodes
   
