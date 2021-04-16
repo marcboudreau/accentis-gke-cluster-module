@@ -112,17 +112,14 @@ jobs:
         gcloud compute instance-groups managed resize "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --size=1
         instance="$(gcloud compute instance-groups managed list-instances "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --format="value(instance)")"
         instance_zone="$(gcloud compute instance-groups managed list-instances test-${GITHUB_SHA:0:7}-bastion --project=accentis-288921 --region=us-east1 --format='value(instance.scope("zones").segment(0))')"
+        instance_ip="$(gcloud compute instances describe $instance --zone=$instance_zone --format='value(networkInterfaces[0].accessConfigs[0].natIP)')"
         kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_accentis-288921_us-east1_test-'${GITHUB_SHA:0:7}'")].cluster.server}')"
-        kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server localhost:9443 --insecure-skip-tls-verify=true
-        echo "Kubernetes Endpoint: $kubernetes_endpoint"
-        echo "Instance: $instance"
-        echo "Instance Zone: $instance_zone"
         ssh-keygen -q -t rsa -b 2048 -N '' -f ~/.ssh/google_compute_engine
+        while ! nc -z $instance_ip 22; do
+          sleep 1
+        done
         gcloud compute ssh "$instance" --project=accentis-288921 --zone="$instance_zone" --strict-host-key-checking=no -- -L "9443:$kubernetes_endpoint:443" -N &
-        echo -n "Waiting 5 seconds..."
-        sleep 5
-        echo " done"
-        echo "Checking if nc is present: $(which nc)"
+        kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server localhost:9443 --insecure-skip-tls-verify=true
         kubectl cluster-info
         kubectl get nodes
   
