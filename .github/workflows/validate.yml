@@ -92,31 +92,33 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
   
-    #- name: Setup Google Cloud SDK
-    #  uses: google-github-actions/setup-gcloud@master
-    #  with:
-    #    project_id: ${{ secrets.GCP_PROJECT }}
-    #    service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-    #    export_default_credentials: true
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        project_id: accentis-288921
+        service_account_key: ${{ secrets.GOOGLE_CREDENTIALS }}
+        export_default_credentials: true
   
     - name: Setup Kubectl
       uses: yokawasa/action-setup-kube-tools@v0.6.0
       with:
         setup-tools: kubectl
 
-    #- name: Setup Kube Config File
-    #  run: gcloud container clusters get-credentials "test-$(git rev-parse --short HEAD)" --region="${{ secrets.GCP_REGION }}"
+    - name: Setup Kube Config File
+      run: gcloud container clusters get-credentials "test-${GITHUB_SHA:0:7}" --region=us-east1
         
-    #- name: Setup SSH Tunnel
-    #  run: |
-    #    gcloud compute instance-groups managed resize "test-$(git rev-parse --short HEAD)-bastion" --region="${{ .secrets.GCP_REGION }}" --size=1
-    #    instance="$(gcloud compute instance-groups managed list-instances "test-$(git rev-parse --short HEAD)-bastion" --region="${{ .secrets.GCP_REGION }}" --format="value(instance)")"
-    #    echo '127.0.0.1 kubernetes' >> /etc/hosts
-    #    kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_'${{ secrets.GCP_PROJECT }}_${{ secret.GCP_REGION }}_test-$(git rev-parse --short HEAD)'")].cluster.server}')"
-    #    kubectl config set-cluster "gke_${{ secrets.GCP_PROJECT }}_${{ secrets.GCP_REGION }}_test-$(git rev-parse --short HEAD)" --server kubernetees:9443
+    - name: Setup SSH Tunnel
+      run: |
+        gcloud compute instance-groups managed resize "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --size=1
+        instance="$(gcloud compute instance-groups managed list-instances "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --format="value(instance)")"
+        echo '127.0.0.1 kubernetes' >> /etc/hosts
+        kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_accentis-288921_us-east1_test-'${GITHUB_SHA:0:7}'")].cluster.server}')"
+        kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server kubernetees:9443
+        echo "$kubernetes_endpoint"
     #    gcloud compute ssh "$instance" --project="${{ secrets.GCP_PROJECT }}" --region="${{ secrets.GCP_REGION }}" -- -L "9443:$kubernetes_endpoint:443" -N &
   
     - name: Terraform Destroy
+      if: always()
       run: terraform destroy -var commit_hash="${GITHUB_SHA:0:7}" -auto-approve
       working-directory: ./testing
       env:
