@@ -12,7 +12,7 @@
 # The ServiceAccount used by the GKE cluster worker nodes.
 #
 resource "google_service_account" "main" {
-  account_id = "${var.cluster_id}-sa"
+  account_id   = "${var.cluster_id}-sa"
   display_name = "${var.cluster_id} Worker Node Service Account"
 }
 
