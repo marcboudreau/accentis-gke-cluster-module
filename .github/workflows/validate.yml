@@ -121,7 +121,7 @@ jobs:
     #    gcloud compute ssh "$instance" --project="${{ secrets.GCP_PROJECT }}" --region="${{ secrets.GCP_REGION }}" -- -L "9443:$kubernetes_endpoint:443" -N &
   
     - name: Terraform Destroy
-      run: terraform destroy -var commit_hash="${GITHUB_SHA:0:7}"
+      run: terraform destroy -var commit_hash="${GITHUB_SHA:0:7}" -auto-approve
       working-directory: ./testing
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
