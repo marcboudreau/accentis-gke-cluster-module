@@ -76,7 +76,7 @@ jobs:
           sleep 1
         done
         set -x
-        gcloud compute ssh "$instance" --project=accentis-288921 --zone="$instance_zone" --strict-host-key-checking=no -- -L "9443:$kubernetes_endpoint:443" -N &
+        gcloud compute ssh "$instance" --project=accentis-288921 --zone="$instance_zone" --strict-host-key-checking=no -- -L "9443:${kubernetes_endpoint:8}:443" -N &
         echo "Waiting for SSH tunnel... "
         i=0
         while ! nc -z localhost 9443 && [[ $i -lt 100 ]]; do
