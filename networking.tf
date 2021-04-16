@@ -31,7 +31,7 @@ resource "google_compute_network" "main" {
 resource "google_compute_subnetwork" "main" {
     ip_cidr_range = cidrsubnet(var.base_cidr_block, 2, 1)
     name          = var.cluster_id
-    network       = google_compute_network.vpc.id
+    network       = google_compute_network.main.id
 
     private_ip_google_access = true
 
@@ -44,6 +44,18 @@ resource "google_compute_subnetwork" "main" {
         ip_cidr_range = cidrsubnet(var.base_cidr_block, 2, 3)
         range_name = "service-ip-range"
     }
+
+    log_config {
+        aggregation_interval = "INTERVAL_5_SEC"
+        flow_sampling        = 0.5
+        metadata             = "INCLUDE_ALL_METADATA"
+    }
+}
+
+resource "google_compute_subnetwork" "non_gke" {
+    ip_cidr_range = cidrsubnet(var.base_cidr_block, 8, 63)
+    name          = "${var.cluster_id}-other"
+    network       = google_compute_network.main.id
 
     log_config {
         aggregation_interval = "INTERVAL_5_SEC"
