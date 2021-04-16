@@ -83,6 +83,8 @@ jobs:
     - name: Terraform Plan
       run: terraform plan -var commit_hash="${GITHUB_SHA:0:7}"
       working-directory: ./testing
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     #- name: Generate Variables File
     #  run: echo "commit_hash = \"test-$(git rev-parse --short HEAD)\"" > test.auto.tfvars
@@ -121,6 +123,8 @@ jobs:
     - name: Terraform Destroy
       run: terraform destroy -var commit_hash="${GITHUB_SHA:0:7}"
       working-directory: ./testing
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     # On push to main, tag the repository to create a module version.
     #- name: Tag Module
