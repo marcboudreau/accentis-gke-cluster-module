@@ -1,48 +1,4 @@
-# This workflow installs the latest version of Terraform CLI and configures the Terraform CLI configuration file
-# with an API token for Terraform Cloud (app.terraform.io). On pull request events, this workflow will run
-# `terraform init`, `terraform fmt`, and `terraform plan` (speculative plan via Terraform Cloud). On push events
-# to the main branch, `terraform apply` will be executed.
-#
-# Documentation for `hashicorp/setup-terraform` is located here: https://github.com/hashicorp/setup-terraform
-#
-# To use this workflow, you will need to complete the following setup steps.
-#
-# 1. Create a `main.tf` file in the root of this repository with the `remote` backend and one or more resources defined.
-#   Example `main.tf`:
-#     # The configuration for the `remote` backend.
-#     terraform {
-#       backend "remote" {
-#         # The name of your Terraform Cloud organization.
-#         organization = "example-organization"
-#
-#         # The name of the Terraform Cloud workspace to store Terraform state files in.
-#         workspaces {
-#           name = "example-workspace"
-#         }
-#       }
-#     }
-#
-#     # An example resource that does nothing.
-#     resource "null_resource" "example" {
-#       triggers = {
-#         value = "A example resource that does nothing!"
-#       }
-#     }
-#
-#
-# 2. Generate a Terraform Cloud user API token and store it as a GitHub secret (e.g. TF_API_TOKEN) on this repository.
-#   Documentation:
-#     - https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html
-#     - https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
-#
-# 3. Reference the GitHub secret in step using the `hashicorp/setup-terraform` GitHub Action.
-#   Example:
-#     - name: Setup Terraform
-#       uses: hashicorp/setup-terraform@v1
-#       with:
-#         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-name: 'Terraform'
+name: 'Validate'
 
 on:
   push:
@@ -52,9 +8,9 @@ on:
 
 jobs:
   terraform:
-    name: 'Terraform'
+    name: 'Validate'
     runs-on: ubuntu-latest
-    environment: production
+    environment: test
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
@@ -92,31 +48,46 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
   
-    #- name: Setup Google Cloud SDK
-    #  uses: google-github-actions/setup-gcloud@master
-    #  with:
-    #    project_id: ${{ secrets.GCP_PROJECT }}
-    #    service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-    #    export_default_credentials: true
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        project_id: accentis-288921
+        service_account_key: ${{ secrets.GOOGLE_CREDENTIALS }}
+        export_default_credentials: true
   
     - name: Setup Kubectl
       uses: yokawasa/action-setup-kube-tools@v0.6.0
       with:
         setup-tools: kubectl
 
-    #- name: Setup Kube Config File
-    #  run: gcloud container clusters get-credentials "test-$(git rev-parse --short HEAD)" --region="${{ secrets.GCP_REGION }}"
+    - name: Setup Kube Config File
+      run: gcloud container clusters get-credentials "test-${GITHUB_SHA:0:7}" --region=us-east1
         
-    #- name: Setup SSH Tunnel
-    #  run: |
-    #    gcloud compute instance-groups managed resize "test-$(git rev-parse --short HEAD)-bastion" --region="${{ .secrets.GCP_REGION }}" --size=1
-    #    instance="$(gcloud compute instance-groups managed list-instances "test-$(git rev-parse --short HEAD)-bastion" --region="${{ .secrets.GCP_REGION }}" --format="value(instance)")"
-    #    echo '127.0.0.1 kubernetes' >> /etc/hosts
-    #    kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_'${{ secrets.GCP_PROJECT }}_${{ secret.GCP_REGION }}_test-$(git rev-parse --short HEAD)'")].cluster.server}')"
-    #    kubectl config set-cluster "gke_${{ secrets.GCP_PROJECT }}_${{ secrets.GCP_REGION }}_test-$(git rev-parse --short HEAD)" --server kubernetees:9443
-    #    gcloud compute ssh "$instance" --project="${{ secrets.GCP_PROJECT }}" --region="${{ secrets.GCP_REGION }}" -- -L "9443:$kubernetes_endpoint:443" -N &
+    - name: Setup SSH Tunnel
+      run: |
+        gcloud compute instance-groups managed resize "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --size=1
+        instance="$(gcloud compute instance-groups managed list-instances "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --format="value(instance)")"
+        instance_zone="$(gcloud compute instance-groups managed list-instances test-${GITHUB_SHA:0:7}-bastion --project=accentis-288921 --region=us-east1 --format='value(instance.scope("zones").segment(0))')"
+        instance_ip="$(gcloud compute instances describe $instance --zone=$instance_zone --format='value(networkInterfaces[0].accessConfigs[0].natIP)')"
+        kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_accentis-288921_us-east1_test-'${GITHUB_SHA:0:7}'")].cluster.server}')"
+        ssh-keygen -q -t rsa -b 2048 -N '' -f ~/.ssh/google_compute_engine
+        echo "Waiting for bastion instance SSH port... "
+        while ! nc -z $instance_ip 22; do
+          sleep 1
+        done
+        gcloud compute ssh "$instance" --project=accentis-288921 --zone="$instance_zone" --strict-host-key-checking=no -- -L "9443:${kubernetes_endpoint:8}:443" -N &
+        echo "Waiting for SSH tunnel... "
+        i=0
+        while ! nc -z localhost 9443 && [[ $i -lt 100 ]]; do
+          sleep 1
+          i=$((i+1))
+        done
+        kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server https://localhost:9443 --insecure-skip-tls-verify=true
+        kubectl cluster-info
+        kubectl get nodes
   
     - name: Terraform Destroy
+      if: always()
       run: terraform destroy -var commit_hash="${GITHUB_SHA:0:7}" -auto-approve
       working-directory: ./testing
       env:
