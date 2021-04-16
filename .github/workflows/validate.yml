@@ -84,7 +84,7 @@ jobs:
           i=$((i+1))
         done
         kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server localhost:9443 --insecure-skip-tls-verify=true
-        kubectl cluster-info
+        kubectl cluster-info dump -v=10
         kubectl get nodes
   
     - name: Terraform Destroy
