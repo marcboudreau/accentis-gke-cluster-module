@@ -16,64 +16,63 @@
 # needed.
 #
 resource "google_compute_region_instance_group_manager" "bastion" {
-    base_instance_name = "${var.cluster_id}-bastion"
-    name               = "${var.cluster_id}-bastion"
+  base_instance_name = "${var.cluster_id}-bastion"
+  name               = "${var.cluster_id}-bastion"
 
-    version {
-        name              = "bastion-version"
-        instance_template = google_compute_instance_template.bastion.id
-    }
+  version {
+    name              = "bastion-version"
+    instance_template = google_compute_instance_template.bastion.id
+  }
 
-    named_port {
-      name = "ssh"
-      port = 22
-    }
+  named_port {
+    name = "ssh"
+    port = 22
+  }
 
-    target_size = 0
+  target_size = 0
 
-    auto_healing_policies {
-      health_check      = google_compute_health_check.bastion.id
-      initial_delay_sec = 15
-    }
+  auto_healing_policies {
+    health_check      = google_compute_health_check.bastion.id
+    initial_delay_sec = 15
+  }
 }
 
 #
 # This Instance Template defines the specifications for the bastion GCE Instance.
 #
 resource "google_compute_instance_template" "bastion" {
-    machine_type = "n1-standard-1"
+  machine_type = "n1-standard-1"
 
-    disk {
-        boot = true
-        source_image = "family/ubuntu-2004-lts"
-        disk_type = "pd-ssd"
-        disk_size_gb = 10
+  disk {
+    boot         = true
+    source_image = "family/ubuntu-2004-lts"
+    disk_type    = "pd-ssd"
+    disk_size_gb = 10
+  }
+
+  name_prefix = "${var.cluster_id}-bastion"
+  network_interface {
+    subnetwork = google_compute_subnetwork.non_gke.self_link
+    access_config {
     }
+  }
 
-    name_prefix = "${var.cluster_id}-bastion"
-    
-    network_interface {
-      subnetwork = google_compute_subnetwork.non_gke.self_link
-      access_config {
-      }
-    }
+  scheduling {
+    automatic_restart = false
+    preemptible       = true
+  }
 
-    scheduling {
-      automatic_restart   = false
-      preemptible         = true
-    }
+  shielded_instance_config {
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+    enable_integrity_monitoring = true
+  }
 
-    shielded_instance_config {
-      enable_secure_boot          = true
-      enable_vtpm                 = true
-      enable_integrity_monitoring = true
-    }
+  tags = ["bastion"]
 
-    tags = ["bastion"]
-
-    lifecycle {
-      create_before_destroy = true
-    }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 #
@@ -81,20 +80,20 @@ resource "google_compute_instance_template" "bastion" {
 # when it is in use.
 #
 resource "google_compute_health_check" "bastion" {
-    provider = google-beta
+  provider = google-beta
 
-    name = "${var.cluster_id}-bastion"
+  name = "${var.cluster_id}-bastion"
 
-    check_interval_sec  = 5
-    healthy_threshold   = 1
-    unhealthy_threshold = 3
-    timeout_sec = 5
+  check_interval_sec  = 5
+  healthy_threshold   = 1
+  unhealthy_threshold = 3
+  timeout_sec         = 5
 
-    tcp_health_check {
-        port = 22
-    }
+  tcp_health_check {
+    port = 22
+  }
 
-    log_config {
-        enable = true
-    }
+  log_config {
+    enable = true
+  }
 }
