@@ -67,10 +67,13 @@ jobs:
       run: |
         gcloud compute instance-groups managed resize "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --size=1
         instance="$(gcloud compute instance-groups managed list-instances "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --format="value(instance)")"
+        instance_zone="$(gcloud compute instance-groups managed list-instances test-${GITHUB_SHA:0:7}-bastion --project=accentis-288921 --region=us-east1 --format='value(instance.scope("zones").segment(0))')"
         kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_accentis-288921_us-east1_test-'${GITHUB_SHA:0:7}'")].cluster.server}')"
         kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server localhost:9443 --insecure-skip-tls-verify=true
-        echo "$kubernetes_endpoint"
-        gcloud compute ssh "$instance" --project=accentis-288921 --region=us-east1 -- -L "9443:$kubernetes_endpoint:443" -N &
+        echo "Kubernetes Endpoint: $kubernetes_endpoint"
+        echo "Instance: $instance"
+        echo "Instance Zone: $instance_zone"
+        gcloud compute ssh "$instance" --project=accentis-288921 --zone "$instance_zone" -- -L "9443:$kubernetes_endpoint:443" -N &
         kubectl cluster-info
         kubectl get nodes
   
