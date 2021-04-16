@@ -75,7 +75,6 @@ jobs:
         while ! nc -z $instance_ip 22; do
           sleep 1
         done
-        set -x
         gcloud compute ssh "$instance" --project=accentis-288921 --zone="$instance_zone" --strict-host-key-checking=no -- -L "9443:${kubernetes_endpoint:8}:443" -N &
         echo "Waiting for SSH tunnel... "
         i=0
@@ -84,7 +83,7 @@ jobs:
           i=$((i+1))
         done
         kubectl config set-cluster "gke_accentis-288921_us-east1_test-${GITHUB_SHA:0:7}" --server https://localhost:9443 --insecure-skip-tls-verify=true
-        kubectl cluster-info dump -v=10
+        kubectl cluster-info
         kubectl get nodes
   
     - name: Terraform Destroy
