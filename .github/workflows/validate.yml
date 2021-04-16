@@ -73,6 +73,7 @@ jobs:
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init
+      working-directory: ./testing
 
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
@@ -81,6 +82,7 @@ jobs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan -var commit_hash="${GITHUB_SHA:0:7}"
+      working-directory: ./testing
 
     #- name: Generate Variables File
     #  run: echo "commit_hash = \"test-$(git rev-parse --short HEAD)\"" > test.auto.tfvars
@@ -118,6 +120,7 @@ jobs:
   
     - name: Terraform Destroy
       run: terraform destroy -var commit_hash="${GITHUB_SHA:0:7}"
+      working-directory: ./testing
 
     # On push to main, tag the repository to create a module version.
     #- name: Tag Module
