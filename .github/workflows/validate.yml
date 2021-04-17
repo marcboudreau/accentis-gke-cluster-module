@@ -65,8 +65,7 @@ jobs:
 
     # Run the verification script to confirm the Kubernetes API endpoint is reachable and nodes exist in the cluster
     - name: Verification
-      run: |
-        ./verify.sh "${GITHUB_SHA:0:7}"
+      run: ./verify.sh "${GITHUB_SHA:0:7}"
       working-directory: ./testing
   
     # Destroy the environment
