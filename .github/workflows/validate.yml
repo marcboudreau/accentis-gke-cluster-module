@@ -66,7 +66,7 @@ jobs:
     - name: Setup SSH Tunnel
       run: |
         gcloud compute instance-groups managed resize "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --size=1
-        instance="$(gcloud compute instance-groups managed list-instances "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --format="value(instance)")"
+        instance="$(gcloud compute instance-groups managed list-instances "test-${GITHUB_SHA:0:7}-bastion" --region=us-east1 --format='value(instance)')"
         instance_zone="$(gcloud compute instance-groups managed list-instances test-${GITHUB_SHA:0:7}-bastion --project=accentis-288921 --region=us-east1 --format='value(instance.scope("zones").segment(0))')"
         instance_ip="$(gcloud compute instances describe $instance --zone=$instance_zone --format='value(networkInterfaces[0].accessConfigs[0].natIP)')"
         kubernetes_endpoint="$(kubectl config view -o jsonpath='{.clusters[?(@.name == "gke_accentis-288921_us-east1_test-'${GITHUB_SHA:0:7}'")].cluster.server}')"

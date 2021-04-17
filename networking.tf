@@ -84,10 +84,32 @@ resource "google_compute_router_nat" "main" {
   name                               = var.cluster_id
   router                             = google_compute_router.main.name
   nat_ip_allocate_option             = "AUTO_ONLY"
-  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+  source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
+  subnetwork {
+    name                    = google_compute_subnetwork.main.id
+    source_ip_ranges_to_nat = ["ALL_IP_RANGES"]
+  }
 
   log_config {
     enable = true
     filter = "TRANSLATIONS_ONLY"
   }
+}
+
+#
+# The Firewall resource provides a rule that allows TCP :22 traffic to reach
+# instances tagged as 'bastion'.
+#
+resource "google_compute_firewall" "main" {
+  name    = var.cluster_id
+  network = google_compute_network.main.self_link
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  priority      = 1000
+  target_tags   = ["bastion"]
 }
