@@ -78,3 +78,26 @@ Where the `v1.0.0` term in the source attribute is the specific tag to use.
 ## Development
 
 This section describes the procedures for improving the module or fixing issues raised.
+
+The **testing/** directory contains a simple Terraform project is used to test the module. The Terraform project takes a single input variable **commit_hash**, the abbreviated git hash for the HEAD commit.  This value is combined with the prefix `test-` to provide a unique name for every unique commit.  A **random_integer** resource is used to provide a random number between 0 and 255 that is then used as the `x` value in the **base_cidr_block** variable (`10.x.0.0/16`).  The **random_integer** will keep returning the same value so long as the **commit_hash** value remains the same.  This ensures that the **base_cidr_block** value remains stable for repeated Terraform apply commands, so long as the **commit_hash** value provided remains the same.
+
+### Local Verification
+
+To verify the module locally, prior to pushing to GitHub, run the following commands:
+```
+$ cd testing/
+$ terraform init
+$ terraform apply -var commit_hash=$(git rev-parse --short HEAD)
+$ ./verify.sh <commit_hash>
+```
+
+Once the initial Terraform **apply** command has been executed, the same **commit_hash** value should continue to be used for all commands that require it.  This will cause Terraform to simply apply the deltas on subsequent Terraform **apply** commands.  If a different **commit_hash** value is used, Terraform will need to recreate every resource since the name of the VPC network will change which forces a replacement (destroy existing resource and create new resource).
+
+Once the verification is complete, destroy the test environment:
+```
+$ terraform destroy -var commit_hash=<commit_hash>
+```
+
+### GitHub Actions
+
+The GitHub actions workflow will repeat the above test automatically for every Pull Request and when the PR is merged to the main branch.
