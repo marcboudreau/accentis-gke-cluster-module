@@ -46,10 +46,11 @@ The module provisions a GKE cluster with the following characteristics:
 
 ## Input Variables
 
-| Variable Name   | Type   | Required | Description |
-| --------------- | ------ | -------- | ----------- |
-| cluster_id      | string | true     | A unique value used to generate names for resources.  Must start with a letter, followed by 4 to 25 letters, numbers, or hyphens. |
-| base_cidr_block | string | true     | A base CIDR range used in the VPC network created by this network.  The CIDR must be a `/16` size. |
+| Variable Name               | Type   | Required | Description |
+| --------------------------- | ------ | -------- | ----------- |
+| cluster_id                  | string | true     | A unique value used to generate names for resources.  Must start with a letter, followed by 4 to 25 letters, numbers, or hyphens. |
+| base_cidr_block             | string | true     | A base CIDR range used in the VPC network created by this network.  The CIDR must be a `/16` size. |
+| worker_node_service_account | string | false | An existing service account to set for the worker nodes in the node pool. |
 
 ## Output Variables
 

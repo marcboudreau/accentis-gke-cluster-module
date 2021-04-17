@@ -45,7 +45,6 @@ resource "google_container_cluster" "main" {
   }
 }
 
-
 resource "google_container_node_pool" "main" {
   name_prefix = var.cluster_id
   location    = "us-east1"
@@ -65,7 +64,7 @@ resource "google_container_node_pool" "main" {
   node_config {
     disk_size_gb    = 10
     machine_type    = "n1-standard-2"
-    service_account = google_service_account.main.email
+    service_account = var.worker_node_service_account
     oauth_scopes    = ["cloud-platform"]
     metadata = {
       disable-legacy-endpoints = true
