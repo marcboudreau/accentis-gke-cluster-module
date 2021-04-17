@@ -46,17 +46,3 @@ resource "random_integer" "network_num" {
         hash = var.commit_hash
     }
 }
-
-resource "google_compute_firewall" "main" {
-    name    = "test-${var.commit_hash}"
-    network = module.mut.network
-
-    allow {
-        protocol = "tcp"
-        ports    = ["22"]
-    }
-
-    source_ranges = ["0.0.0.0/0"]
-    priority      = 1000
-    target_tags   = ["bastion"]
-}
