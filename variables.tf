@@ -19,3 +19,9 @@ variable "base_cidr_block" {
     error_message = "The base_cidr_block must be a /16 range."
   }
 }
+
+variable "worker_node_service_account" {
+  type        = string
+  description = "The service account to set for the worker node pool"
+  default     = ""
+}
