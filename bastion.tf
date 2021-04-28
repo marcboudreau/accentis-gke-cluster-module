@@ -29,7 +29,7 @@ resource "google_compute_region_instance_group_manager" "bastion" {
     port = 22
   }
 
-  target_size = 0
+  target_size = 1
 
   auto_healing_policies {
     health_check      = google_compute_health_check.bastion.id
